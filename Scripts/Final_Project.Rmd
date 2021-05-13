@@ -10,17 +10,35 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-```{r}
-## 2015-2016 to 2019-2020
+```{r cache = T}
+## names aren't as intuitive as in the example DA gave in class
+## I put the links in a tibble
+## you can map through the links and then let the user specify which years
+## 
 links <- 
-  c(
-    'https://download.gosa.ga.gov/2020/Graduation_Rate_2020_Dec112020.csv', 
-    'https://download.gosa.ga.gov/2019/Graduation_Rate_2019_Dec2nd_2019.csv', 
-    'https://download.gosa.ga.gov/2018/Graduation_Rate_2018_JAN_24th_2019.csv',
-    'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2017_DEC_1st_2017.csv', 
-    'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2016_DEC_1st_2016.csv')
+  tibble(GY_2020 = 
+      'https://download.gosa.ga.gov/2020/Graduation_Rate_2020_Dec112020.csv', 
+    GY_2019 = 
+      'https://download.gosa.ga.gov/2019/Graduation_Rate_2019_Dec2nd_2019.csv', 
+    GY_2018 = 
+      'https://download.gosa.ga.gov/2018/Graduation_Rate_2018_JAN_24th_2019.csv',
+    GY_2017 = 
+      'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2017_DEC_1st_2017.csv', 
+    GY_2016 = 
+      'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2016_DEC_1st_2016.csv',
+    GY_2015 = 
+      'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2015_DEC_1st_2016.csv', 
+    GY_2014 = 
+      'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2014_DEC_1st_2016.csv',
+    GY_2013 = 
+      'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2013_DEC_1st_2016.csv',
+    GY_2012 = 
+      'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2012_4yr.csv',
+    GY_2011 = 
+    'https://download.gosa.ga.gov/2011/Graduation_Rate_2011_MAR_23_2020.csv'
+    )
 
-download_clean_data <- function(number_of_years = 5) {
+download_clean_data <- function(number_of_years = 10) {
   download_links <- links[1:number_of_years]
   map_dfr(download_links, ~rio::import(.x, setclass = "tibble")) %>% 
     janitor::clean_names() %>% 
@@ -56,6 +74,15 @@ download_clean_data <- function(number_of_years = 5) {
 
 d0 <- 
   download_clean_data()
+
+rio::export(
+  d0,
+  here::here(
+    'Data', 
+    paste0('Cleaned_Data_', Sys.Date(), '.csv')
+    ), 
+  format = ','
+  )
 ```
 
 ## write function to choose student groups (here is some code to start)
@@ -105,7 +132,7 @@ dat <-
     ) 
 ```
 
-## put this into a loop so it does this for every school
+## map through selected schools and make the plots
 
 We can make this function print schools by name, too. So the default will be all schools, but they can specify some schools if they want.
 
@@ -113,22 +140,32 @@ We can make this function print schools by name, too. So the default will be all
 dat %>% 
   mutate(
     student_group = 
-      trimws(gsub(
-        pattern = 'Students', replacement = '', student_group)),
+      trimws(
+        gsub(
+          pattern = 'Students', replacement = '', student_group)),
     student_group = str_to_sentence(student_group),
     student_group = 
       gsub(
-        pattern = ' ', replacement = '\n', student_group)
+        pattern = ' ', replacement = '\n', student_group
+        )
     ) %>% 
   drop_na(student_group, perc_graduate) %>%
   group_by(instn_name, student_group) %>% 
   mutate(
     average_grad = mean(perc_graduate),
     se_grad = sd(perc_graduate)/sqrt(n()),
-    lower_ci =
+    lower_ci_90 =
+      average_grad - 1.65*se_grad,
+    upper_ci_90 =
+      average_grad + 1.65*se_grad,
+    lower_ci_95 =
       average_grad - 1.96*se_grad,
-    upper_ci =
+    upper_ci_95 =
       average_grad + 1.96*se_grad,
+    lower_ci_99 =
+      average_grad - 2.58*se_grad,
+    upper_ci_99 =
+      average_grad + 2.58*se_grad,
     ) %>%
   ungroup() %>% 
   ggplot(
@@ -148,10 +185,27 @@ dat %>%
     ) +
   geom_errorbar(
     aes(
-      xmin = lower_ci, 
-      xmax = upper_ci
+      xmin = lower_ci_90, 
+      xmax = upper_ci_90
     ),
-    width = 0.5
+    width = 0.2, 
+    alpha = 0.1
+  ) +
+  geom_errorbar(
+    aes(
+      xmin = lower_ci_95, 
+      xmax = upper_ci_95
+    ),
+    width = 0.4, 
+    alpha = 0.2
+  ) +
+  geom_errorbar(
+    aes(
+      xmin = lower_ci_99, 
+      xmax = upper_ci_99
+    ),
+    width = 0.6, 
+    alpha = 0.6
   ) +
   geom_point() +
   theme_minimal() + 
@@ -161,7 +215,8 @@ dat %>%
         vjust = 0, 
         size = 7
         ), 
-    legend.position = 'none'
+    legend.position = 'none',
+    plot.title.position = 'plot'
   ) +
   colorblindr::scale_fill_OkabeIto() + 
   colorblindr::scale_color_OkabeIto() +
@@ -169,23 +224,13 @@ dat %>%
     y =  NULL,
     x = 'Percent Graduation', 
     caption = 'Horizontal line = average percent graduation of all groups
-source = https://gosa.georgia.gov/dashboards-data-report-card/downloadable-data', 
+source = https://gosa.georgia.gov/dashboards-data-report-card/downloadable-data
+Error bars represent 90%, 95%, & 99% CIs', 
 title = paste0('Percent Graduation of Student Groups for
 {SCHOOL NAME} from ', min(dat$grad_year), ' to ', max(dat$grad_year)))
 ```
 
-## put that loop into a function
-
-```{r}
-
-```
-
-
 ## write a function to save the plots
-
-```{r}
-
-```
 
 ```{r}
 
