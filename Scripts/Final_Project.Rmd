@@ -1,0 +1,194 @@
+---
+title: "Final Project"
+author: "Christopher Loan & Merly Klaas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+## 2015-2016 to 2019-2020
+links <- 
+  c(
+    'https://download.gosa.ga.gov/2020/Graduation_Rate_2020_Dec112020.csv', 
+    'https://download.gosa.ga.gov/2019/Graduation_Rate_2019_Dec2nd_2019.csv', 
+    'https://download.gosa.ga.gov/2018/Graduation_Rate_2018_JAN_24th_2019.csv',
+    'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2017_DEC_1st_2017.csv', 
+    'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2016_DEC_1st_2016.csv')
+
+download_clean_data <- function(number_of_years = 5) {
+  download_links <- links[1:number_of_years]
+  map_dfr(download_links, ~rio::import(.x, setclass = "tibble")) %>% 
+    janitor::clean_names() %>% 
+    mutate(
+      student_group = 
+        factor(gsub('Grad Rate -', '', label_lvl_1_desc)), 
+      num_graduates = program_total, 
+      perc_graduate = program_percent,
+      prop_graduate = program_percent/100,
+      num_students = num_graduates/prop_graduate,
+      granularity = detail_lvl_desc,
+      grad_year = as.numeric(
+        str_replace(long_school_year, '1[:digit:]-', '')
+      )
+      ) %>% 
+    filter(
+      ## only want schools (not districts or whole state)
+      granularity == 'School' & 
+      ## eliminate schools which couldn't have graduation 
+      ## (i.e., non high schools)
+      grepl(pattern = '12' , x = grades_served_desc) == T
+    ) %>% 
+    select(
+      instn_name, 
+      grad_year,
+      student_group, 
+      num_students, 
+      num_graduates, 
+      perc_graduate, 
+      grades_served_desc,
+      )
+}
+
+d0 <- 
+  download_clean_data()
+```
+
+## write function to choose student groups (here is some code to start)
+
+```{r}
+## possible groups the user can subset
+## write an if statement in the function
+## that outputs these possible groups in a warning
+## if they specify a group that isn't in here
+
+stu_group_options <- 
+  gsub(
+    pattern = 'Grad Rate -', 
+    replacement = '',
+    x = unique(d0$student_group)
+    )
+
+warning(
+  'Specified group (or groups) not available. There are ',
+  length(stu_group_options), 
+  ' groups available for subsetting: ',
+  knitr::combine_words(stu_group_options),
+  '. Please select one or more of these groups.'
+)
+
+## example of selected groups
+
+groups <- 
+  c(
+    'ALL Students', 
+    'Economically Disadvantaged', 
+    'Black',
+    'White',
+    'Not Economically Disadvantaged',
+    'Students With Disability', 
+    'Students Without Disability'
+  )
+
+schools_of_interest <- c('Appling County High School')
+
+dat <- 
+  d0 %>% 
+  filter(
+    ## only looking at certain student groups to make data manageable
+    student_group %in% groups & 
+      instn_name %in% schools_of_interest
+    ) 
+```
+
+## put this into a loop so it does this for every school
+
+We can make this function print schools by name, too. So the default will be all schools, but they can specify some schools if they want.
+
+```{r}
+dat %>% 
+  mutate(
+    student_group = 
+      trimws(gsub(
+        pattern = 'Students', replacement = '', student_group)),
+    student_group = str_to_sentence(student_group),
+    student_group = 
+      gsub(
+        pattern = ' ', replacement = '\n', student_group)
+    ) %>% 
+  drop_na(student_group, perc_graduate) %>%
+  group_by(instn_name, student_group) %>% 
+  mutate(
+    average_grad = mean(perc_graduate),
+    se_grad = sd(perc_graduate)/sqrt(n()),
+    lower_ci =
+      average_grad - 1.96*se_grad,
+    upper_ci =
+      average_grad + 1.96*se_grad,
+    ) %>%
+  ungroup() %>% 
+  ggplot(
+    aes(
+      y = 
+        fct_reorder(
+          student_group, 
+          average_grad
+          ),
+      x = average_grad, 
+      color = student_group)
+    ) +
+  geom_vline(
+    aes(
+      xintercept = mean(average_grad)
+      )
+    ) +
+  geom_errorbar(
+    aes(
+      xmin = lower_ci, 
+      xmax = upper_ci
+    ),
+    width = 0.5
+  ) +
+  geom_point() +
+  theme_minimal() + 
+  theme(
+    axis.text.y = 
+      element_text(
+        vjust = 0, 
+        size = 7
+        ), 
+    legend.position = 'none'
+  ) +
+  colorblindr::scale_fill_OkabeIto() + 
+  colorblindr::scale_color_OkabeIto() +
+  labs(
+    y =  NULL,
+    x = 'Percent Graduation', 
+    caption = 'Horizontal line = average percent graduation of all groups
+source = https://gosa.georgia.gov/dashboards-data-report-card/downloadable-data', 
+title = paste0('Percent Graduation of Student Groups for
+{SCHOOL NAME} from ', min(dat$grad_year), ' to ', max(dat$grad_year)))
+```
+
+## put that loop into a function
+
+```{r}
+
+```
+
+
+## write a function to save the plots
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+I'll make it shiny
