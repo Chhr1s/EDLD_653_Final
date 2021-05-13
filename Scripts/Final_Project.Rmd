@@ -14,9 +14,9 @@ library(tidyverse)
 ## names aren't as intuitive as in the example DA gave in class
 ## I put the links in a tibble
 ## you can map through the links and then let the user specify which years
-## 
+
 links <- 
-  tibble(GY_2020 = 
+  c(GY_2020 = 
       'https://download.gosa.ga.gov/2020/Graduation_Rate_2020_Dec112020.csv', 
     GY_2019 = 
       'https://download.gosa.ga.gov/2019/Graduation_Rate_2019_Dec2nd_2019.csv', 
@@ -37,6 +37,7 @@ links <-
     GY_2011 = 
     'https://download.gosa.ga.gov/2011/Graduation_Rate_2011_MAR_23_2020.csv'
     )
+## Merly: Improve function to be able to specify by year
 
 download_clean_data <- function(number_of_years = 10) {
   download_links <- links[1:number_of_years]
@@ -88,6 +89,8 @@ rio::export(
 ## write function to choose student groups (here is some code to start)
 
 ```{r}
+## Merly: turn into function
+
 ## possible groups the user can subset
 ## write an if statement in the function
 ## that outputs these possible groups in a warning
@@ -137,6 +140,8 @@ dat <-
 We can make this function print schools by name, too. So the default will be all schools, but they can specify some schools if they want.
 
 ```{r}
+## Merly: Figure out how to map through these and save for all schools
+## (after Chris): turn into function
 dat %>% 
   mutate(
     student_group = 
