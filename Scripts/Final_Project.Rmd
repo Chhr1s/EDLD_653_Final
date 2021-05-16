@@ -39,7 +39,7 @@ links <-
     )
 ## Merly: Improve function to be able to specify by year
 
-download_clean_data <- function(number_of_years = 10) {
+download_clean_data <- function(number_of_years = 10, year) {
   download_links <- links[1:number_of_years]
   map_dfr(download_links, ~rio::import(.x, setclass = "tibble")) %>% 
     janitor::clean_names() %>% 
@@ -57,7 +57,7 @@ download_clean_data <- function(number_of_years = 10) {
       ) %>% 
     filter(
       ## only want schools (not districts or whole state)
-      granularity == 'School' & 
+      granularity == 'School' & grad_year== year & 
       ## eliminate schools which couldn't have graduation 
       ## (i.e., non high schools)
       grepl(pattern = '12' , x = grades_served_desc) == T
@@ -74,7 +74,7 @@ download_clean_data <- function(number_of_years = 10) {
 }
 
 d0 <- 
-  download_clean_data()
+  download_clean_data(year=2020) #Example for year 2020
 
 rio::export(
   d0,
