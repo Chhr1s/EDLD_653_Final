@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(dplyr)
 ```
 
 ```{r cache = T}
@@ -39,7 +40,7 @@ links <-
     )
 ## Merly: Improve function to be able to specify by year
 
-download_clean_data <- function(number_of_years = 10, year) {
+download_clean_data <- function(number_of_years = 10, start, end) {
   download_links <- links[1:number_of_years]
   map_dfr(download_links, ~rio::import(.x, setclass = "tibble")) %>% 
     janitor::clean_names() %>% 
@@ -57,7 +58,7 @@ download_clean_data <- function(number_of_years = 10, year) {
       ) %>% 
     filter(
       ## only want schools (not districts or whole state)
-      granularity == 'School' & grad_year== year & 
+      granularity == 'School' &  grad_year >= start & grad_year <= end &
       ## eliminate schools which couldn't have graduation 
       ## (i.e., non high schools)
       grepl(pattern = '12' , x = grades_served_desc) == T
@@ -74,7 +75,7 @@ download_clean_data <- function(number_of_years = 10, year) {
 }
 
 d0 <- 
-  download_clean_data(year=2020) #Example for year 2020
+  download_clean_data(start=2011, end=2017) #Example for between 2011 - 2017
 
 rio::export(
   d0,
@@ -102,7 +103,6 @@ stu_group_options <-
     replacement = '',
     x = unique(d0$student_group)
     )
-
 warning(
   'Specified group (or groups) not available. There are ',
   length(stu_group_options), 
