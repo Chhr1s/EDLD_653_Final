@@ -9,10 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(dplyr)
+library(rmdHelpers)
 ```
 
 ```{r cache = T}
-## names aren't as intuitive as in the example DA gave in class
+## names aren't as intuitive as in the example DA gave in class 
 ## I put the links in a tibble
 ## you can map through the links and then let the user specify which years
 
@@ -75,7 +76,7 @@ download_clean_data <- function(number_of_years = 10, start, end) {
 }
 
 d0 <- 
-  download_clean_data(start=2011, end=2017) #Example for between 2011 - 2017
+  download_clean_data(start=2011, end=2016) #Example for between 2011 - 2017
 
 rio::export(
   d0,
@@ -96,23 +97,54 @@ rio::export(
 ## write an if statement in the function
 ## that outputs these possible groups in a warning
 ## if they specify a group that isn't in here
-
+# 
+# stu_group_options <-
+#   
+#   gsub( 
+#     pattern = 'Grad Rate -', 
+#     replacement = '',
+#     x = unique(d0$student_group)
+#     )
+# warning(
+#   'Specified group (or groups) not available. There are ',
+#   length(stu_group_options), 
+#   ' groups available for subsetting: ',
+#   knitr::combine_words(stu_group_options),
+#   '. Please select one or more of these groups.'
+# )
+# 
+# ## example of selected groups
+# 
+# groups <- 
+#   c(
+#     'ALL Students', 
+#     'Economically Disadvantaged', 
+#     'Black',
+#     'White',
+#     'Not Economically Disadvantaged',
+#     'Students With Disability', 
+#     'Students Without Disability'
+#   )
+# 
+# schools_of_interest <- c('Appling County High School')
+# 
+# dat <- 
+#   d0 %>% 
+#   filter(
+#     ## only looking at certain student groups to make data manageable
+#     student_group %in% groups & 
+#       instn_name %in% schools_of_interest
+#     ) 
+```
+```{r}
 stu_group_options <- 
-  gsub(
+  gsub( 
     pattern = 'Grad Rate -', 
     replacement = '',
     x = unique(d0$student_group)
     )
-warning(
-  'Specified group (or groups) not available. There are ',
-  length(stu_group_options), 
-  ' groups available for subsetting: ',
-  knitr::combine_words(stu_group_options),
-  '. Please select one or more of these groups.'
-)
 
 ## example of selected groups
-
 groups <- 
   c(
     'ALL Students', 
@@ -121,10 +153,30 @@ groups <-
     'White',
     'Not Economically Disadvantaged',
     'Students With Disability', 
-    'Students Without Disability'
+    'Students Without Disability',
+    'English Language Learner'
   )
 
 schools_of_interest <- c('Appling County High School')
+
+
+select_group <- function (test_group){
+  check_group <- groups %in% stu_group_options
+if (any(check_group == F)){
+  NA_group <- groups[which (check_group == F)]
+length_NA <- length(NA_group)
+print_NA_group <- printList(toPrint = NA_group, finalSepWord = "and", midSep = ",")
+warning(
+  length_NA , ' specified group (or groups) not available: ' , print_NA_group,  '. There are ',
+  length(stu_group_options), 
+  ' groups available for subsetting: ',
+  knitr::combine_words(stu_group_options),
+  '. Please select one or more of these groups.'
+)}
+}
+select_group(test_group = groups)
+
+
 
 dat <- 
   d0 %>% 
