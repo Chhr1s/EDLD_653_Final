@@ -91,52 +91,6 @@ rio::export(
 ## write function to choose student groups (here is some code to start)
 
 ```{r}
-## Merly: turn into function
-
-## possible groups the user can subset
-## write an if statement in the function
-## that outputs these possible groups in a warning
-## if they specify a group that isn't in here
-# 
-# stu_group_options <-
-#   
-#   gsub( 
-#     pattern = 'Grad Rate -', 
-#     replacement = '',
-#     x = unique(d0$student_group)
-#     )
-# warning(
-#   'Specified group (or groups) not available. There are ',
-#   length(stu_group_options), 
-#   ' groups available for subsetting: ',
-#   knitr::combine_words(stu_group_options),
-#   '. Please select one or more of these groups.'
-# )
-# 
-# ## example of selected groups
-# 
-# groups <- 
-#   c(
-#     'ALL Students', 
-#     'Economically Disadvantaged', 
-#     'Black',
-#     'White',
-#     'Not Economically Disadvantaged',
-#     'Students With Disability', 
-#     'Students Without Disability'
-#   )
-# 
-# schools_of_interest <- c('Appling County High School')
-# 
-# dat <- 
-#   d0 %>% 
-#   filter(
-#     ## only looking at certain student groups to make data manageable
-#     student_group %in% groups & 
-#       instn_name %in% schools_of_interest
-#     ) 
-```
-```{r}
 stu_group_options <- 
   gsub( 
     pattern = 'Grad Rate -', 
