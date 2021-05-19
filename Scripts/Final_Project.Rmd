@@ -112,7 +112,7 @@ groups <-
     'Kindergarteners'
   )
 
-schools_of_interest <- c('Appling County High School', 
+schools_of_interest <- c('Appling County High School', #adding 2 more school to try map through different schools
                          'Bacon County High School',
                          'Apalachee High School'
 )
