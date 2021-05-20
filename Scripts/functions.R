@@ -10,6 +10,29 @@ download_clean_data <- function(start_year = 2011, end_year = 2020) {
     warning('Invalid year(s). Data available from 2011 to 2020')
   }
   
+  links <- 
+    c(GY_2020 = 
+        'https://download.gosa.ga.gov/2020/Graduation_Rate_2020_Dec112020.csv', 
+      GY_2019 = 
+        'https://download.gosa.ga.gov/2019/Graduation_Rate_2019_Dec2nd_2019.csv', 
+      GY_2018 = 
+        'https://download.gosa.ga.gov/2018/Graduation_Rate_2018_JAN_24th_2019.csv',
+      GY_2017 = 
+        'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2017_DEC_1st_2017.csv', 
+      GY_2016 = 
+        'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2016_DEC_1st_2016.csv',
+      GY_2015 = 
+        'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2015_DEC_1st_2016.csv', 
+      GY_2014 = 
+        'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2014_DEC_1st_2016.csv',
+      GY_2013 = 
+        'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2013_DEC_1st_2016.csv',
+      GY_2012 = 
+        'https://gosa.georgia.gov/sites/gosa.georgia.gov/files/related_files/site_page/Graduation_Rate_2012_4yr.csv',
+      GY_2011 = 
+        'https://download.gosa.ga.gov/2011/Graduation_Rate_2011_MAR_23_2020.csv'
+    )
+  
   download_links <- links[paste0('GY_', start_year:end_year)]
   
   map_dfr(download_links, ~rio::import(.x, setclass = "tibble")) %>% 
@@ -48,20 +71,24 @@ download_clean_data <- function(start_year = 2011, end_year = 2020) {
 
 ##### function to select group of interest #####
 
-select_groups <- function(cleaned_data_frame, test_group){
+select_groups <- 
+  function(
+    cleaned_data_frame, 
+    groups_of_interest = unique(cleaned_data_frame$student_group)
+    ){
   
   stu_group_options <- 
     gsub( 
       pattern = 'Grad Rate -', 
       replacement = '',
-      x = unique(d0$student_group)
+      x = unique(cleaned_data_frame$student_group)
     )
   
-  check_group <- groups %in% stu_group_options
+  check_group <- groups_of_interest %in% stu_group_options
   
   if (any(check_group == F)){
     
-    NA_group <- groups[which (check_group == F)]
+    NA_group <- groups_of_interest[which (check_group == F)]
     
     length_NA <- length(NA_group)
     
@@ -95,32 +122,36 @@ make_plot_titles <-
   function(df){
     df %>% 
       mutate(
-        student_group_temp =  
+        student_group_label =  
           trimws(
             gsub(
               pattern = 'Students', 
               replacement = '', 
               student_group)
           ),
-        student_group_temp = str_to_sentence(student_group_temp),
-        student_group_temp = 
+        student_group_label = str_to_sentence(student_group_label),
+        student_group_label = 
           gsub(
             pattern = ' ', 
             replacement = '\n', 
-            student_group_temp
+            student_group_label
           ), 
         title = 
-          glue::glue('Percent Graduation of Student Groups for\n{instn_name} from {min(grad_year)} to {max(grad_year)}')
-      ) %>% 
-      select(-student_group_temp)
+          glue::glue('Percent Graduation of Student Groups for\n{instn_name}\nfrom {min(grad_year)} to {max(grad_year)}')
+      ) 
   }
 
 
-##### funtion to make plots #####
+##### function to make plots #####
 
-grad_year_plots <- function(cleaned_data_frame, groups_of_interest)
+grad_year_plots <- 
+  function(
+    cleaned_data_frame, 
+    groups_of_interest = unique(cleaned_data_frame$student_group)
+    )
 {
   cleaned_data_frame %>% 
+    select_groups(groups_of_interest = groups_of_interest) %>% 
     drop_na(student_group, perc_graduate) %>%
     group_by(instn_name, student_group) %>% 
     mutate(
@@ -150,7 +181,7 @@ grad_year_plots <- function(cleaned_data_frame, groups_of_interest)
             aes(
               y = 
                 fct_reorder(
-                  student_group, 
+                  student_group_label, 
                   average_grad
                 ),
               x = average_grad, 
