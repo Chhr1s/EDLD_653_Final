@@ -8,16 +8,11 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(dplyr)
 library(rmdHelpers)
 library(glue)
 ```
 
 ```{r cache = T}
-## names aren't as intuitive as in the example DA gave in class 
-## I put the links in a tibble
-## you can map through the links and then let the user specify which years
-
 links <- 
   c(GY_2020 = 
       'https://download.gosa.ga.gov/2020/Graduation_Rate_2020_Dec112020.csv', 
@@ -40,10 +35,20 @@ links <-
     GY_2011 = 
     'https://download.gosa.ga.gov/2011/Graduation_Rate_2011_MAR_23_2020.csv'
     )
-## Merly: Improve function to be able to specify by year
+```
 
-download_clean_data <- function(number_of_years = 10, start, end) {
-  download_links <- links[1:number_of_years]
+```{r}
+download_clean_data <- function(start_year = 2011, end_year = 2020) {
+  
+  if (end_year < start_year) {
+    warning('End year must be greater than or equal to start year')
+  }
+  
+  if (start_year < 2011 | start_year > 2020 | end_year < 2011 | end_year > 2020){
+    warning('Invalid year(s). Data available from 2011 to 2020')
+  }
+  
+  download_links <- links[paste0('GY_', start_year:end_year)]
   map_dfr(download_links, ~rio::import(.x, setclass = "tibble")) %>% 
     janitor::clean_names() %>% 
     mutate(
@@ -60,11 +65,11 @@ download_clean_data <- function(number_of_years = 10, start, end) {
       ) %>% 
     filter(
       ## only want schools (not districts or whole state)
-      granularity == 'School' &  grad_year >= start & grad_year <= end &
+      granularity == 'School' &  
       ## eliminate schools which couldn't have graduation 
       ## (i.e., non high schools)
       grepl(pattern = '12' , x = grades_served_desc) == T
-    ) %>% 
+      ) %>% 
     select(
       instn_name, 
       grad_year,
@@ -75,18 +80,14 @@ download_clean_data <- function(number_of_years = 10, start, end) {
       grades_served_desc,
       )
 }
+```
 
+```{r}
 d0 <- 
-  download_clean_data(start=2011, end=2016) #Example for between 2011 - 2017
-
-rio::export(
-  d0,
-  here::here(
-    'Data', 
-    paste0('Cleaned_Data_', Sys.Date(), '.csv')
-    ), 
-  format = ','
-  )
+  download_clean_data(
+    start_year=2011,
+    end_year=2020
+    ) #Example for between 2011 - 2020
 ```
 
 ## write function to choose student groups (here is some code to start)
@@ -100,48 +101,71 @@ stu_group_options <-
     )
 
 ## example of selected groups
+
 groups <- 
-  c(
-    'ALL Students', 
+  c('ALL Students', 
     'Economically Disadvantaged', 
     'Black',
     'White',
     'Not Economically Disadvantaged',
     'Students With Disability', 
-    'Students Without Disability',
-    'Kindergarteners'
+    'Students Without Disability'
+    #'Kindergarteners' # add this to trigger warning
   )
 
-schools_of_interest <- c('Appling County High School', #adding 2 more school to try map through different schools
-                         'Bacon County High School',
-                         'Apalachee High School'
+schools_of_interest <- c(
+  'Appling County High School', 
+  'Bacon County High School',
+  'Apalachee High School'
 )
 
+```
 
-select_group <- function (test_group){
+```{r}
+select_group <- function(cleaned_data_frame, test_group){
+  
   check_group <- groups %in% stu_group_options
-if (any(check_group == F)){
-  NA_group <- groups[which (check_group == F)]
-length_NA <- length(NA_group)
-print_NA_group <- printList(toPrint = NA_group, finalSepWord = "and", midSep = ",")
-warning(
-  length_NA , ' specified group (or groups) not available: ' , print_NA_group,  '. There are ',
-  length(stu_group_options), 
-  ' groups available for subsetting: ',
-  knitr::combine_words(stu_group_options),
-  '. Please select one or more of these groups.'
-)}
-}
-select_group(test_group = groups)
-
-
-dat <- 
-  d0 %>% 
+  
+  if (any(check_group == F)){
+    
+    NA_group <- groups[which (check_group == F)]
+    
+    length_NA <- length(NA_group)
+    
+    print_NA_group <- 
+      printList(
+        toPrint = NA_group, 
+        finalSepWord = "and", 
+        midSep = ","
+        )
+    
+    warning(
+      length_NA , 
+      ' specified group (or groups) not available: ',
+      print_NA_group,
+      '. There are ',
+      length(stu_group_options), 
+      ' groups available for subsetting: ',
+      knitr::combine_words(stu_group_options),
+      '. Please select one or more of these groups.'
+      
+    )}
+  
+  cleaned_data_frame %>% 
   filter(
-    ## only looking at certain student groups to make data manageable
     student_group %in% groups & 
       instn_name %in% schools_of_interest
-    ) 
+    )
+  
+}
+```
+
+```{r}
+dat <- 
+  select_group(
+    cleaned_data_frame = d0,
+    test_group = groups
+    )
 ```
 
 ## map through selected schools and make the plots
@@ -166,18 +190,9 @@ We can make this function print schools by name, too. So the default will be all
 # dat_school <- filter(dat,instn_name == 'Bacon County High School')
 
 
-dat %>%
-  mutate(
-    student_group =  
-      trimws(
-        gsub(
-          pattern = 'Students', replacement = '', student_group)),
-    student_group = str_to_sentence(student_group),
-    student_group = 
-      gsub(
-        pattern = ' ', replacement = '\n', student_group
-        )
-    ) %>% 
+
+p <-
+  dat %>% 
   drop_na(student_group, perc_graduate) %>%
   group_by(instn_name, student_group) %>% 
   mutate(
@@ -197,158 +212,91 @@ dat %>%
       average_grad + 2.58*se_grad,
     ) %>%
   ungroup() %>% 
-  # group_by(instn_name) %>% 
-  # nest() %>% 
-  # mutate(plot=map(data,~{
-  ggplot(
-    aes(
-      y = 
-        fct_reorder(
-          student_group, 
-          average_grad
-          ),
-      x = average_grad, 
-      color = student_group)
-    ) +
-  geom_vline(
-    aes(
-      xintercept = mean(average_grad)
-      )
-    ) +
-  geom_errorbar(
-    aes(
-      xmin = lower_ci_90, 
-      xmax = upper_ci_90
-    ),
-    width = 0.2, 
-    alpha = 0.1
-  ) +
-  geom_errorbar(
-    aes(
-      xmin = lower_ci_95, 
-      xmax = upper_ci_95
-    ),
-    width = 0.4, 
-    alpha = 0.2
-  ) +
-  geom_errorbar(
-    aes(
-      xmin = lower_ci_99, 
-      xmax = upper_ci_99
-    ),
-    width = 0.6, 
-    alpha = 0.6
-  ) +
-  geom_point() +
-  theme_minimal() + 
-  theme(
-    axis.text.y = 
-      element_text(
-        vjust = 0, 
-        size = 7
+  mutate(
+    student_group =  
+      trimws(
+        gsub(
+          pattern = 'Students', replacement = '', student_group)),
+    student_group = str_to_sentence(student_group),
+    student_group = 
+      gsub(
+        pattern = ' ', replacement = '\n', student_group
         ), 
-    legend.position = 'none',
-    plot.title.position = 'plot'
-  ) +
-  colorblindr::scale_fill_OkabeIto() + 
-  colorblindr::scale_color_OkabeIto() +
-  labs(
-    y =  NULL,
-    x = 'Percent Graduation', 
-    caption = 'Horizontal line = average percent graduation of all groups
+    title = glue::glue('Percent Graduation of Student Groups for
+{instn_name} from {min(grad_year)} to {max(grad_year)}'),
+    ) %>% 
+  nest_by(instn_name, title) %>% 
+  mutate(
+    plots = 
+      list(
+        ggplot(
+          data = data,
+          aes(
+            y = 
+              fct_reorder(
+                student_group, 
+                average_grad
+                ),
+            x = average_grad, 
+            color = student_group)
+          ) +
+        geom_vline(
+          aes(
+            xintercept = mean(average_grad)
+            )
+          ) +
+        geom_errorbar(
+          aes(
+            xmin = lower_ci_90, 
+            xmax = upper_ci_90
+          ),
+          width = 0.2, 
+          alpha = 0.1
+        ) +
+        geom_errorbar(
+          aes(
+            xmin = lower_ci_95, 
+            xmax = upper_ci_95
+          ),
+          width = 0.4, 
+          alpha = 0.2
+        ) +
+        geom_errorbar(
+          aes(
+            xmin = lower_ci_99, 
+            xmax = upper_ci_99
+          ),
+          width = 0.6, 
+          alpha = 0.6
+        ) +
+        geom_point() +
+        theme_minimal() + 
+        theme(
+          axis.text.y = 
+            element_text(
+              vjust = 0, 
+              size = 7
+              ), 
+          legend.position = 'none',
+          plot.title.position = 'plot'
+        ) +
+        colorblindr::scale_fill_OkabeIto() + 
+        colorblindr::scale_color_OkabeIto() +
+        labs(
+          y =  NULL,
+          x = 'Percent Graduation', 
+          caption = 'Horizontal line = average percent graduation of all groups
 source = https://gosa.georgia.gov/dashboards-data-report-card/downloadable-data
 Error bars represent 90%, 95%, & 99% CIs', 
-title = paste0('Percent Graduation of Student Groups for
-{SCHOOL NAME} from ', min(dat$grad_year), ' to ', max(dat$grad_year)))
-
+          title = title)
+))
 ```
-```{r}
-#Trial Failed
-#   dat1 <- 
-#   d0 %>% 
-#   filter(
-#     ## only looking at certain student groups to make data manageable
-#     student_group %in% groups & 
-#       instn_name %in% schools_of_interest %>% 
-#       group_by(instn_name) %>% 
-#   nest() %>% 
-#   mutate(plot = pmap(list(dat), 
-#                      function(.dat)
-#                        ggplot(
-#     aes(
-#       y = 
-#         fct_reorder(
-#           student_group, 
-#           average_grad
-#           ),
-#       x = average_grad, 
-#       color = student_group)
-#     ) +
-#   geom_vline(
-#     aes(
-#       xintercept = mean(average_grad)
-#       )
-#     ) +
-#   geom_errorbar(
-#     aes(
-#       xmin = lower_ci_90, 
-#       xmax = upper_ci_90
-#     ),
-#     width = 0.2, 
-#     alpha = 0.1
-#   ) +
-#   geom_errorbar(
-#     aes(
-#       xmin = lower_ci_95, 
-#       xmax = upper_ci_95
-#     ),
-#     width = 0.4, 
-#     alpha = 0.2
-#   ) +
-#   geom_errorbar(
-#     aes(
-#       xmin = lower_ci_99, 
-#       xmax = upper_ci_99
-#     ),
-#     width = 0.6, 
-#     alpha = 0.6
-#   ) +
-#   geom_point() +
-#   theme_minimal() + 
-#   theme(
-#     axis.text.y = 
-#       element_text(
-#         vjust = 0, 
-#         size = 7
-#         ), 
-#     legend.position = 'none',
-#     plot.title.position = 'plot'
-#   ) +
-#   colorblindr::scale_fill_OkabeIto() + 
-#   colorblindr::scale_color_OkabeIto() +
-#   labs(
-#     y =  NULL,
-#     x = 'Percent Graduation', 
-#     caption = 'Horizontal line = average percent graduation of all groups
-# source = https://gosa.georgia.gov/dashboards-data-report-card/downloadable-data
-# Error bars represent 90%, 95%, & 99% CIs', 
-# title = paste0('Percent Graduation of Student Groups for
-# {SCHOOL NAME} from ', min(dat$grad_year), ' to ', max(dat$grad_year)))
-#       )
-#     )
-#   )
-
-```
-
 
 ## write a function to save the plots
+
 ```{r}
 # create file directory
 files <- str_replace_all(tolower(unique(d0$instn_name)[1:100]), " ", "-")
 paths <- here::here("Plots", glue("{files}.png"))
 ```
 
-
-```
-
-I'll make it shiny
