@@ -23,7 +23,6 @@ d0 <-
 
 ```{r}
 ## example of selected groups
-
 groups <- 
   c('ALL Students', 
     'Economically Disadvantaged', 
@@ -40,13 +39,11 @@ test <- grad_year_plots(
   cleaned_data_frame = d0, 
   groups_of_interest = groups
   )
-
 ```
 
 # Still need to do this: 
 
 ## 1. Write function to allow specifying which schools (then embed in `grad_year_plots()` function)
-
 
 ```{r}
 schools_of_interest <- 
@@ -67,3 +64,7 @@ files <- str_replace_all(tolower(unique(d0$instn_name)[1:100]), " ", "-")
 paths <- here::here("Plots", glue("{files}.png"))
 ```
 
+## 3. Make it interactive
+
+* shiny to choose which plots to download
+* `reactable` table to see the data
