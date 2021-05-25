@@ -7,7 +7,7 @@ download_clean_data <- function(start_year = 2011, end_year = 2020) {
   }
   
   if (start_year < 2011 | start_year > 2020 | end_year < 2011 | end_year > 2020){
-    warning('Invalid year(s). Data available from 2011 to 2020')
+    warning('Invalid year(s). Data only available from 2011 to 2020')
   }
   
   links <- 
@@ -82,9 +82,12 @@ select_groups <-
       pattern = 'Grad Rate -', 
       replacement = '',
       x = unique(cleaned_data_frame$student_group)
-    )
+    ) # I'm kind of confused by this part since there is no pattern "Grad Rate -"
   
   check_group <- groups_of_interest %in% stu_group_options
+  # I think commenting here would be helpful - I'm a little confused 
+  # since the two variables should be the same since they're both taken 
+  # from `unique(cleaned_data_frame$student_group)`
   
   if (any(check_group == F)){
     
@@ -173,70 +176,42 @@ grad_year_plots <-
     ungroup() %>% 
     make_plot_titles() %>% 
     nest_by(instn_name, title) %>% 
-    transmute(
-      plot = 
-        list(
-          ggplot(
-            data = data,
-            aes(
-              y = 
-                fct_reorder(
-                  student_group_label, 
-                  average_grad
-                ),
-              x = average_grad, 
-              color = student_group)
-          ) +
-            geom_vline(
-              aes(
-                xintercept = mean(average_grad)
-              )
-            ) +
-            geom_errorbar(
-              aes(
-                xmin = lower_ci_90, 
-                xmax = upper_ci_90
-              ),
-              width = 0.2, 
-              alpha = 0.1
-            ) +
-            geom_errorbar(
-              aes(
-                xmin = lower_ci_95, 
-                xmax = upper_ci_95
-              ),
-              width = 0.4, 
-              alpha = 0.2
-            ) +
-            geom_errorbar(
-              aes(
-                xmin = lower_ci_99, 
-                xmax = upper_ci_99
-              ),
-              width = 0.6, 
-              alpha = 0.6
-            ) +
+    transmute( 
+      # breaking this part down into so many lines can be pretty difficult to read
+      # I edited based on how I might enter it, but you can also disregard my edits if you don't like it
+      plot = list(
+        ggplot(data = data, 
+               aes(y = fct_reorder(student_group_label, average_grad),
+                   x = average_grad, color = student_group)) +
+          geom_vline(aes(xintercept = mean(average_grad))) +
+          geom_errorbar(aes(xmin = lower_ci_90, 
+                            xmax = upper_ci_90),
+                        width = 0.2, 
+                        alpha = 0.1) +
+            geom_errorbar(aes(xmin = lower_ci_95, 
+                              xmax = upper_ci_95),
+                          width = 0.4, 
+                          alpha = 0.2) +
+            geom_errorbar(aes(xmin = lower_ci_99,
+                              xmax = upper_ci_99),
+                          width = 0.6,
+                          alpha = 0.6) +
             geom_point() +
             theme_minimal() + 
-            theme(
-              axis.text.y = 
-                element_text(
-                  vjust = 0, 
-                  size = 7
-                ), 
-              legend.position = 'none',
-              plot.title.position = 'plot'
-            ) +
-            colorblindr::scale_fill_OkabeIto() + 
-            colorblindr::scale_color_OkabeIto() +
-            labs(
-              y =  NULL,
-              x = 'Percent Graduation', 
-              caption = 'Horizontal line = average percent graduation of all groups
-source = https://gosa.georgia.gov/dashboards-data-report-card/downloadable-data
-Error bars represent 90%, 95%, & 99% CIs', 
-              title = title)
-        )) %>% 
-    ungroup() %>% 
-    select(-title)
+            theme(axis.text.y = element_text(vjust = 0, 
+                                             size = 7), 
+                  legend.position = 'none',
+                  plot.title.position = 'plot') +
+            # I commented these out so I could run the code without the colorblindr package
+            # feel free to uncomment them so you can actually use them, I do love those palettes
+            #colorblindr::scale_fill_OkabeIto() + 
+            #colorblindr::scale_color_OkabeIto() +
+            labs(y =  NULL,
+                 x = 'Percent Graduation', 
+                 caption = 'Horizontal line = average percent graduation of all groups
+                 source = https://gosa.georgia.gov/dashboards-data-report-card/downloadable-data
+                 Error bars represent 90%, 95%, & 99% CIs', 
+                 title = title))) %>% 
+      ungroup() %>% 
+      select(-title)
 }

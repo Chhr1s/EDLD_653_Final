@@ -1,0 +1,15 @@
+Peer Review
+
+Lea Frank
+May 25th, 2021
+
+General comments:
+- What's the format (e.g. tutorial) of the final project?
+- I would definitely add in a description of the data for the final product
+
+Functions:
+- just a heads up the "colorblindr" package isn't available for my version of R (4.1.0), so you might want to make note of it somewhere
+- the `grad_year_plots` function was pretty long to follow- you could probably break it down into smaller chunks (e.g. create the nested dataframe, then add the column with plots)
+
+Final_Project.Rmd:
+- 

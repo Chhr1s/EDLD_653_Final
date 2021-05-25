@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rmdHelpers)
 library(glue)
-source('Scripts/functions.R')
+source('functions.R') # was already in the Scripts directory so I removed that part 
 ```
 
 ```{r}
@@ -30,7 +30,7 @@ groups <-
     'White',
     'Not Economically Disadvantaged',
     'Students With Disability', 
-    'Students Without Disability'#,'Kindergarteners' # add this to trigger warning
+    'Students Without Disability'#,'Kindergartners' # add this to trigger warning
   )
 ```
 
