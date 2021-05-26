@@ -229,6 +229,7 @@ grad_year_plots <-
             ) +
             colorblindr::scale_fill_OkabeIto() + 
             colorblindr::scale_color_OkabeIto() +
+            scale_y_continuous(labels = scales::percent_format(scale = 1) + #to put % in your axis
             labs(
               y =  NULL,
               x = 'Percent Graduation', 

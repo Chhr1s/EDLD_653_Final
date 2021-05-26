@@ -10,8 +10,13 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rmdHelpers)
 library(glue)
-source('Scripts/functions.R')
+
+# J changed code and added here pkg
+library(here) # used here to bypass wd issues
+source(here::here("Scripts", "functions.R")) # modified directory code
 ```
+
+*J: I couldn't get the code that references functions.R to work on my computer. I'm not quite sure what the issue is, but I tweaked the code using `here` package to bypass dealing with file paths altogether assuming it had something to do with that. I know it's common to have issues with file paths across operating systems, so that may be something to consider for reproducibility--though I'll say take that with a grain of salt because I'm not sure that was the issue to begin with.*
 
 ```{r}
 d0 <- 
@@ -20,6 +25,8 @@ d0 <-
     end_year = 2020
     ) 
 ```
+
+*J: Looking at your cleaned data, it seems to have a lot of missing values. Is this something you plan to include information on in your final product? It seems helpful for the person interacting with the Shiny app to know what those missing values mean in context, assuming they're included in the output in some way (i.e. does NA = 0?)*
 
 ```{r}
 ## example of selected groups
@@ -38,7 +45,8 @@ groups <-
 test <- grad_year_plots(
   cleaned_data_frame = d0, 
   groups_of_interest = groups
-  )
+  ) # I got an error message here b/c of the colorblindr package used in the plot function
+# Maybe include that package in your library call? Might not be necessary for a Shiny app.
 ```
 
 # Still need to do this: 
@@ -68,3 +76,5 @@ paths <- here::here("Plots", glue("{files}.png"))
 
 * shiny to choose which plots to download
 * `reactable` table to see the data
+
+*J: Great idea to make it interactive! That will be a great final product with useful information that's easy to interact with visually. Nice use of error bars. Your example plot looks great though I had a question about the horizontal line across all groups: is this line average percent graduation for the group(s) chosen by school, across all groups by school, or across the entire dataset?*
