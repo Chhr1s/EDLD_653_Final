@@ -10,7 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rmdHelpers)
 library(glue)
-source('Scripts/functions.R')
+
+# I cannot open this file successfully with the current code, so I changed the path.
+source('./functions.R')
 ```
 
 ```{r}
@@ -39,6 +41,7 @@ test <- grad_year_plots(
   cleaned_data_frame = d0, 
   groups_of_interest = groups
   )
+
 ```
 
 # Still need to do this: 
