@@ -21,6 +21,7 @@ d0 <-
     ) 
 ```
 
+## In a Shiny app you could have these listed in checkboxes or dropdown lists.
 ```{r}
 ## example of selected groups
 groups <- 
@@ -44,6 +45,17 @@ test <- grad_year_plots(
 # Still need to do this: 
 
 ## 1. Write function to allow specifying which schools (then embed in `grad_year_plots()` function)
+
+## Consider making schools of interest a searchable text input in the shiny app:
+##i.e.,:
+
+#UI
+`textInput(school_int, "School of Interest", value = "", width = NULL, placeholder = NULL)`
+
+# Server
+`school_of_interest <- reactive({input$school_int})`
+
+
 
 ```{r}
 schools_of_interest <- 
