@@ -1,5 +1,9 @@
 ##### function to download clean data ####
 
+# this function is doing a lot of things all at once. i think this could be
+# adapted into multiple smaller functions (3-4) and then one final function (5) that
+# calls all of them, which makes it easier to follow and troubleshoot
+
 download_clean_data <- function(start_year = 2011, end_year = 2020) {
   
   if (end_year < start_year) {
@@ -8,7 +12,7 @@ download_clean_data <- function(start_year = 2011, end_year = 2020) {
   
   if (start_year < 2011 | start_year > 2020 | end_year < 2011 | end_year > 2020){
     warning('Invalid year(s). Data available from 2011 to 2020')
-  }
+  } # these are both useful and informative warning messages
   
   links <- 
     c(GY_2020 = 
@@ -33,7 +37,7 @@ download_clean_data <- function(start_year = 2011, end_year = 2020) {
         'https://download.gosa.ga.gov/2011/Graduation_Rate_2011_MAR_23_2020.csv'
     )
   
-  download_links <- links[paste0('GY_', start_year:end_year)]
+  download_links <- links[paste0('GY_', start_year:end_year)] # everything up to this point could be one function possibly?
   
   map_dfr(download_links, ~rio::import(.x, setclass = "tibble")) %>% 
     janitor::clean_names() %>% 
@@ -46,7 +50,7 @@ download_clean_data <- function(start_year = 2011, end_year = 2020) {
       num_students = num_graduates/prop_graduate,
       granularity = detail_lvl_desc,
       grad_year = as.numeric(
-        str_replace(long_school_year, '1[:digit:]-', '')
+        str_replace(long_school_year, '1[:digit:]-', '') # and then this could be a 2nd func
       )
     ) %>% 
     filter(
@@ -63,9 +67,10 @@ download_clean_data <- function(start_year = 2011, end_year = 2020) {
       num_students, 
       num_graduates, 
       perc_graduate, 
-      grades_served_desc,
+      grades_served_desc, # and then this could either be a 3rd or a 3rd and a 4th
     )
 }
+
 
 
 
@@ -86,9 +91,9 @@ select_groups <-
   
   check_group <- groups_of_interest %in% stu_group_options
   
-  if (any(check_group == F)){
+  if (any(check_group == F)){ # i'm still new to this function so it's helpful to see it in use!
     
-    NA_group <- groups_of_interest[which (check_group == F)]
+    NA_group <- groups_of_interest[which (check_group == F)] # i've never seen the `which()` function before and will definitely also use it in the future
     
     length_NA <- length(NA_group)
     
@@ -109,14 +114,15 @@ select_groups <-
       knitr::combine_words(stu_group_options),
       '. Please select one or more of these groups.'
       
-    )}
+    )} # another useful warning message
   
   cleaned_data_frame %>% 
     filter(student_group %in% groups)
   
-}
+} # i also think this function could benefit from being separated into smaller, simpler functions.
+# this is something i've also been having to work on a lot in my own code!
 
-##### funciton to make plot titles #####
+##### function to make plot titles #####
 
 make_plot_titles <- 
   function(df){
@@ -168,7 +174,7 @@ grad_year_plots <-
       lower_ci_99 =
         average_grad - 2.58*se_grad,
       upper_ci_99 =
-        average_grad + 2.58*se_grad,
+        average_grad + 2.58*se_grad, # i think this could also possibly be its own function
     ) %>%
     ungroup() %>% 
     make_plot_titles() %>% 
@@ -217,7 +223,7 @@ grad_year_plots <-
               alpha = 0.6
             ) +
             geom_point() +
-            theme_minimal() + 
+            theme_minimal() + # i think all of this formatting is really nice!
             theme(
               axis.text.y = 
                 element_text(
@@ -239,4 +245,10 @@ Error bars represent 90%, 95%, & 99% CIs',
         )) %>% 
     ungroup() %>% 
     select(-title)
-}
+}\
+
+# these are all very sophisticated and useful functions! 
+
+# i wasn't able to get the plot function to run, but i'm not sure why, and it might be something on my end,
+# but i've gone over my 1 hour limit, so i don't have time to troubleshoot. however, from looking through
+# the code, it looks like it would produce very nice-looking plots with really helpful customizations!

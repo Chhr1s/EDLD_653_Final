@@ -10,7 +10,13 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rmdHelpers)
 library(glue)
-source('Scripts/functions.R')
+# source('Scripts/functions.R') # this is throwing an error for me. is there a way to use `here::here` to make this work more seamlessly?
+
+library(here)
+
+source(here::here("Scripts/functions.R")) # this works
+
+
 ```
 
 ```{r}
@@ -38,7 +44,7 @@ groups <-
 test <- grad_year_plots(
   cleaned_data_frame = d0, 
   groups_of_interest = groups
-  )
+  ) # i am getting an error here that has to do with the `colorblindr` package. i'm not sure if this has to do with me updating my version of R and needing to update packages, so it could be due to my personal computer, but if not it's something to consider
 ```
 
 # Still need to do this: 
