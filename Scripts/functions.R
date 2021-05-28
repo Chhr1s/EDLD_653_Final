@@ -116,6 +116,32 @@ select_groups <-
   
 }
 
+
+##### Function to select school of interest ####
+select_schools <- 
+  function (
+    cleaned_data_frame, 
+    schools_of_interest = unique(cleaned_data_frame$instn_name)
+  ){
+    check_school <- schools_of_interest %in% cleaned_data_frame$instn_name
+    if(any(check_school==F)){
+      NA_school <-schools_of_interest [which (check_school==F)]
+      length_NA_school <- length(NA_school)
+      print_NA_school <-
+        printList (
+          toPrint = NA_school,
+          finalSepWord = "and",
+          midSep = ","
+        )
+      warning (
+        length_NA_school, 
+        ' specified school (or schools) not available: ', 
+        print_NA_school,
+        '. '
+      )}
+    cleaned_data_frame %>%
+      filter(instn_name %in% schools_of_interest)
+  }
 ##### funciton to make plot titles #####
 
 make_plot_titles <- 
@@ -147,11 +173,13 @@ make_plot_titles <-
 grad_year_plots <- 
   function(
     cleaned_data_frame, 
-    groups_of_interest = unique(cleaned_data_frame$student_group)
+    groups_of_interest = unique(cleaned_data_frame$student_group),
+    schools_of_interest = unique(cleaned_data_frame$instn_name)
     )
 {
   cleaned_data_frame %>% 
     select_groups(groups_of_interest = groups_of_interest) %>% 
+    select_schools(schools_of_interest = schools_of_interest) %>% 
     drop_na(student_group, perc_graduate) %>%
     group_by(instn_name, student_group) %>% 
     mutate(
@@ -239,4 +267,7 @@ Error bars represent 90%, 95%, & 99% CIs',
         )) %>% 
     ungroup() %>% 
     select(-title)
-}
+  }
+
+#### Function to save plots ####
+
