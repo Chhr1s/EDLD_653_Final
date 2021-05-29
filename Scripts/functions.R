@@ -142,7 +142,7 @@ select_schools <-
     cleaned_data_frame %>%
       filter(instn_name %in% schools_of_interest)
   }
-##### funciton to make plot titles #####
+##### function to make plot titles #####
 
 make_plot_titles <- 
   function(df){
@@ -270,4 +270,22 @@ Error bars represent 90%, 95%, & 99% CIs',
   }
 
 #### Function to save plots ####
-
+saveplot <- function (test){
+fs::dir_create(here::here("plots"))
+files <- str_replace_all(tolower(test$instn_name), " ", "-")
+paths <- here::here("plots", glue("{files}.png"))
+test %>% 
+  ungroup() %>%
+  mutate(path = paths)%>%
+  rowwise() %>%
+  summarize(
+    list(
+    ggsave(
+      path, 
+      plot, 
+      width = 9.5, 
+      height = 6.5,
+      dpi = 500
+    ))
+)
+}
