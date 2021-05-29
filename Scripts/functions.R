@@ -77,12 +77,7 @@ select_groups <-
     groups_of_interest = unique(cleaned_data_frame$student_group)
     ){
   
-  stu_group_options <- 
-    gsub( 
-      pattern = 'Grad Rate -', 
-      replacement = '',
-      x = unique(cleaned_data_frame$student_group)
-    )
+  stu_group_options <- unique(cleaned_data_frame$student_group)
   
   check_group <- groups_of_interest %in% stu_group_options
   
@@ -111,8 +106,10 @@ select_groups <-
       
     )}
   
+  else{
   cleaned_data_frame %>% 
-    filter(student_group %in% groups)
+    filter(student_group %in% groups_of_interest)
+  }
   
 }
 
@@ -253,9 +250,9 @@ grad_year_plots <-
                   size = 7
                 ), 
               legend.position = 'none',
-              plot.title.position = 'plot', 
-              text = element_text(color = 'white'), 
-              axis.text = element_text(color = 'white')
+              plot.title.position = 'plot'#, 
+              #text = element_text(color = 'white'), 
+              #axis.text = element_text(color = 'white')
             ) +
             colorblindr::scale_fill_OkabeIto() + 
             colorblindr::scale_color_OkabeIto() +

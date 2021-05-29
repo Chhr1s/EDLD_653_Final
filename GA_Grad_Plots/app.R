@@ -1,40 +1,82 @@
-library(shiny)
+library(shinydashboard)
+source(here::here('Scripts','functions.R'))
+dat <- rio::import(here::here('Data', 'All_Years_Cleaned_Data.csv'))
+#devtools::install_github('https://github.com/daqana/dqshiny')
+library(dqshiny)
+sidebar_menu <- 
+    dashboardSidebar(
+        sidebarMenu(
+            menuItem("Chart", tabName = 'graph', icon = icon('bar-chart-o')),
+            # menuItem(
+            #     'Groups of Interest', 
+            #     tabname = 'slider',
+            #     icon = icon('gamepad'), 
+            #     ## this puts the option in a drop down
+                selectInput(
+                    'groups',
+                    "Click to select 1+ group(s):",
+                    multiple = TRUE,
+                    selected =
+                        c('ALL Students',
+                          'Economically Disadvantaged',
+                          'Not Economically Disadvantaged'
+                       ),
+                    choices = 
+                        c('ALL Students', 
+                          'Economically Disadvantaged', 
+                          'Black',
+                          'White',
+                          'Not Economically Disadvantaged',
+                          'Students With Disability', 
+                          'Students Without Disability'
+                        )
+                   # )
+                ),
+## install the package with this
+## devtools::install_github('https://github.com/daqana/dqshiny')
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
+            dqshiny::autocomplete_input(
+                'school_names_manual', 
+                'Type specific school name for only one plot', 
+                options = unique(dat$instn_name), 
+                value = "Appling County High School", 
+                width = NULL,
+                placeholder = NULL, 
+                max_options = 0, 
+                hide_values = FALSE
+                )
+        )
+    )
 
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
+body_tabs <- 
+    tabItems(
+        tabItem(
+            'graph',
+            box(plotOutput("plot", height = 450)))
+    )
 
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
 
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
+ui <- dashboardPage(
+    dashboardHeader(title = "Basic dashboard"),
+    sidebar_menu,
+    dashboardBody(
+        # Boxes need to be put in a row (or column)
+        fluidRow(
+            body_tabs
         )
     )
 )
 
-# Define server logic required to draw a histogram
-server <- function(input, output) {
-
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
+server <- function(input, output, click) {
+    
+    output$plot <- renderPlot({
+        plots <- grad_year_plots(
+            dat, 
+            groups_of_interest = input$groups, 
+            schools_of_interest = input$school_names_manual)
+        plots$plot[[1]]
     })
+    
 }
 
-# Run the application 
-shinyApp(ui = ui, server = server)
+shinyApp(ui, server)

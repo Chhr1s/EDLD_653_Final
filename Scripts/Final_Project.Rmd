@@ -40,6 +40,8 @@ schools <-
   'Chapel Hill High School'#,'SMANSHA Kupang High School' #add this to trigger warning
 )
 
+school_names <- tibble(school_names = d0$instn_name)
+
 ```
 
 ```{r}
