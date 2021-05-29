@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rmdHelpers)
 library(glue)
-source('functions.R')
+source(here::here('Scripts','functions.R'))
 ```
 
 ```{r}
@@ -48,12 +48,14 @@ test <- grad_year_plots(
   groups_of_interest = groups,
   schools_of_interest = schools
   )
+test$plot[[1]]
 ```
 
 ## 2. Write a function to save the plots 
 
 ```{r}
-saveplot(test=test)
+saveplot(nested_plot_df = test)
+
 ```
 
 ## 3. Make it interactive
