@@ -249,7 +249,7 @@ grad_year_plots <-
                   vjust = 0, 
                   size = 7
                 ), 
-              legend.position = 'none',
+              legend.position = 'bottom',
               plot.title.position = 'plot'#, 
               #text = element_text(color = 'white'), 
               #axis.text = element_text(color = 'white')
@@ -273,13 +273,13 @@ Error bars represent 90%, 95%, & 99% CIs',
 
 
 #### Function to save plots ####
-saveplot <- function (nested_plot_df){
+save_plots <- function (nested_plot_df){
   
   fs::dir_create(here::here("plots"))
-  files <- str_replace_all(tolower(test$instn_name), " ", "-")
+  files <- str_replace_all(tolower(nested_plot_df$instn_name), " ", "-")
   paths <- here::here("plots", glue("{files}.png"))
   
-  test %>% 
+  nested_plot_df %>% 
     ungroup() %>%
     mutate(path = paths) %>%
     rowwise() %>%
@@ -291,6 +291,11 @@ saveplot <- function (nested_plot_df){
         width = 9.5, 
         height = 6.5,
         dpi = 500
-      ))
-)
+      )))
 }
+
+zip_plots <- 
+  function(){
+    zip(zipfile = 'testZip', files = 'plots')
+  }
+

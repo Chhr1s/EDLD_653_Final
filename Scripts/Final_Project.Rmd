@@ -46,18 +46,16 @@ school_names <- tibble(school_names = d0$instn_name)
 
 ```{r}
 test <- grad_year_plots(
-  cleaned_data_frame = d0, 
-  groups_of_interest = groups,
-  schools_of_interest = schools
+  cleaned_data_frame = d0#, 
+  #groups_of_interest = groups,
+  #schools_of_interest = schools
   )
-test$plot[[1]]
 ```
 
 ## 2. Write a function to save the plots 
 
 ```{r}
-saveplot(nested_plot_df = test)
-
+save_plots(nested_plot_df = test)
 ```
 
 ## 3. Make it interactive
