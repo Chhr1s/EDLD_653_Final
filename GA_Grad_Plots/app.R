@@ -3,6 +3,7 @@ library(shinydashboard)
 library(reactable)
 library(dqshiny)
 library(tidyverse)
+library(ggplot2)
 source(here::here('Scripts','functions.R'))
 
 
@@ -24,7 +25,7 @@ sidebar_menu <-
         sidebarMenu(
             menuItem("Chart", tabName = 'graph', icon = icon('bar-chart-o')),
             menuItem("Table", tabName = 'table1', icon = icon('table')),
-            #menuItem("Data Download", tabName = 'downloader_tab', icon = icon('save')),
+            menuItem("Data Download", tabName = 'downloader_tab', icon = icon('save')),
             menuItem(
                 'Groups of Interest',
                 tabname = 'slider',
@@ -56,19 +57,18 @@ sidebar_menu <-
 
 body_tabs <- 
     tabItems(
-        tabItem(
-            'graph',
-            box(plotOutput("plot1", height = 600))), 
-        # tabItem('plot_downloader',
-        #     box(downloadButton("plot_downloader", "Download Plot", icon = icon('save')))
-        #     ),
-        tabItem(
-            'table1',
-            reactable::reactableOutput("table1"))#, 
-        # tabItem('data_downloader',
-        #         box(downloadButton("data_downloader", "Download All Data", icon = icon('download')))
-        #         )
-        )
+        tabItem('graph',
+        plotOutput("plot1", height = 600),             
+        box(downloadButton("plot_downloader", "Download Plot", icon = icon('save')))),
+        tabItem('table1',
+                reactable::reactableOutput("table1"), 
+                box(downloadButton("downloadData", label = "Download Selected Data"))
+            ),
+         tabItem('downloader_tab',
+                    box(downloadButton("data_downloader", "Download All Data", icon = icon('download')))
+                 )
+    )
+    
 
 
 ui <- dashboardPage(
@@ -83,9 +83,18 @@ ui <- dashboardPage(
     skin = c('black'))
 
 server <- function(input, output) {
+    datasetInput <-reactive({ dat %>% 
+            select_groups(groups_of_interest = input$groups) %>% 
+            select_schools(schools_of_interest = input$school_names_manual) %>% 
+            mutate_if(is.numeric, round, 2) %>% 
+            reactable(filterable = T)
+        
+    }
+        
+    )
+#    reactive_school_name <- reactive({input$school_names_manual})
     
-    reactive_school_name <- reactive({input$school_names_manual})
-    
+ 
     output$plot1 <- renderPlot({
         plots <- grad_year_plots(
             dat, 
@@ -95,35 +104,43 @@ server <- function(input, output) {
         plt + theme_minimal(base_size = 18) + theme(legend.position = 'bottom') 
     })
     
-    
-    
-    output$table1 <- renderReactable({
-        dat %>% 
+    table_download <-reactive({dat %>% 
             select_groups(groups_of_interest = input$groups) %>% 
             select_schools(schools_of_interest = input$school_names_manual) %>% 
-            mutate_if(is.numeric, round, 2) %>% 
-            reactable(filterable = T)
+            mutate_if(is.numeric, round, 2)})
+    
+    output$table1 <- renderReactable({
+    table_download() %>%
+    reactable(filterable = T)
     })
-    
-    
     output$data_downloader <- downloadHandler(
         filename = 'full_data.csv',
         content = function(file) {
             write.csv(dat, file)
         }
     )
-
+    
+    output$downloadData <- downloadHandler(
+        filename = function() {
+            paste("Data", input$school_names_manual,".csv", sep = " ") #customize school name for data
+            },
+        content = function(file) {
+            write.csv(table_download(), file)
+            
+        }
+    )
     output$plot_downloader <- downloadHandler(
-        filename = 'plot.png',
-        content = function(fname) {
+        filename = function() {
+            paste("Plot", input$school_names_manual,".png", sep = " ") #customize school name for plot
+        },
+        content = function(file){
             plots <- grad_year_plots(
                 dat,
                 groups_of_interest = input$groups,
                 schools_of_interest = input$school_names_manual)
             plt <- plots$plot[[1]]
-            ggsave(plt)
+            ggsave(file, width = 10, plot=plt) #change the width to 10 to prevent the legend from clipping
         }
         )
 }
-
 shinyApp(ui, server)

@@ -275,7 +275,7 @@ Error bars represent 90%, 95%, & 99% CIs',
 #### Function to save plots ####
 save_plots <- function (nested_plot_df){
   
-  fs::dir_create(here::here("plots"))
+  fs::dir_create(here::here("Plots"))
   files <- str_replace_all(tolower(nested_plot_df$instn_name), " ", "-")
   paths <- here::here("plots", glue("{files}.png"))
   
@@ -298,4 +298,5 @@ zip_plots <-
   function(){
     zip(zipfile = 'testZip', files = 'plots')
   }
+
 
