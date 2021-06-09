@@ -4,10 +4,10 @@ library(reactable)
 library(dqshiny)
 library(tidyverse)
 library(ggplot2)
-source(here::here('Scripts','functions.R'))
+source('functions.R')
 
 
-dat <- rio::import(here::here('Data', 'All_Years_Cleaned_Data.csv'))
+dat <- rio::import('All_Years_Cleaned_Data.csv')
 
 student_groups_vector <- c(
     'ALL Students', 
