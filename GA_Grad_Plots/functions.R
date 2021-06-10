@@ -222,6 +222,7 @@ grad_year_plots <-
                 xmin = lower_ci_90, 
                 xmax = upper_ci_90
               ),
+              size = 2,
               width = 0.2, 
               alpha = 0.1
             ) +
@@ -230,6 +231,7 @@ grad_year_plots <-
                 xmin = lower_ci_95, 
                 xmax = upper_ci_95
               ),
+              size = 1.75,
               width = 0.4, 
               alpha = 0.2
             ) +
@@ -238,10 +240,11 @@ grad_year_plots <-
                 xmin = lower_ci_99, 
                 xmax = upper_ci_99
               ),
+              size = 1.5,
               width = 0.6, 
               alpha = 0.6
             ) +
-            geom_point() +
+            geom_point(size = 5) +
             theme_minimal() + 
             theme(
               axis.text.y = 
@@ -262,7 +265,7 @@ grad_year_plots <-
             labs(
               y =  NULL,
               x = 'Percent Graduation', 
-              caption = 'Horizontal line = average percent graduation of all groups
+              caption = 'Vertical line = average percent graduation of all groups
 source = https://gosa.georgia.gov/dashboards-data-report-card/downloadable-data
 Error bars represent 90%, 95%, & 99% CIs', 
               title = title)

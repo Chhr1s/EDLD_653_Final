@@ -25,7 +25,7 @@ sidebar_menu <-
         sidebarMenu(
             menuItem("Chart", tabName = 'graph', icon = icon('bar-chart-o')),
             menuItem("Table", tabName = 'table1', icon = icon('table')),
-            menuItem("Data Download", tabName = 'downloader_tab', icon = icon('save')),
+           # menuItem("Data Download", tabName = 'downloader_tab', icon = icon('save')),
             menuItem(
                 'Groups of Interest',
                 tabname = 'slider',
@@ -50,7 +50,8 @@ sidebar_menu <-
                 placeholder = 'autofill on', 
                 max_options = 0, 
                 hide_values = FALSE
-                )
+            ),
+           downloadButton("data_downloader", "Download All Data")
         )
     )
 
@@ -63,10 +64,7 @@ body_tabs <-
         tabItem('table1',
                 reactable::reactableOutput("table1"), 
                 box(downloadButton("downloadData", label = "Download Selected Data"))
-            ),
-         tabItem('downloader_tab',
-                    box(downloadButton("data_downloader", "Download All Data", icon = icon('download')))
-                 )
+            )
     )
     
 
@@ -77,6 +75,9 @@ ui <- dashboardPage(
     dashboardBody(
         # Boxes need to be put in a row (or column)
         fluidPage(
+            tags$head(
+                tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+            ),
             #title = 'plots',
             body_tabs)
         ),
@@ -101,7 +102,11 @@ server <- function(input, output) {
             groups_of_interest = input$groups, 
             schools_of_interest = input$school_names_manual)
         plt <- plots$plot[[1]]
-        plt + theme_minimal(base_size = 18) + theme(legend.position = 'bottom') 
+        plt + 
+            theme_minimal(base_size = 18) + 
+            theme(legend.position = 'bottom',
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.minor.y = element_blank()) 
     })
     
     table_download <-reactive({dat %>% 
